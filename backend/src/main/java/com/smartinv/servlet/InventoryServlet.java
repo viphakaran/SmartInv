@@ -96,8 +96,17 @@ public class InventoryServlet implements HttpHandler {
         if (!idStr.isEmpty()) item.setId(Integer.parseInt(idStr));
         item.setName(AuthServlet.extractJSONValue(body, "name"));
         item.setSku(AuthServlet.extractJSONValue(body, "sku"));
+        String catName = AuthServlet.extractJSONValue(body, "categoryName");
+        item.setCategoryName(!catName.isEmpty() ? catName : "Raw Materials");
         String catIdStr = AuthServlet.extractJSONValue(body, "categoryId");
-        item.setCategoryId(!catIdStr.isEmpty() ? Integer.parseInt(catIdStr) : 1);
+        if (!catIdStr.isEmpty()) {
+            item.setCategoryId(Integer.parseInt(catIdStr));
+        } else {
+            if ("Components".equalsIgnoreCase(catName)) item.setCategoryId(2);
+            else if ("Finished Goods".equalsIgnoreCase(catName)) item.setCategoryId(3);
+            else if ("Packaging".equalsIgnoreCase(catName)) item.setCategoryId(4);
+            else item.setCategoryId(1);
+        }
         String qtyStr = AuthServlet.extractJSONValue(body, "stockQty");
         item.setStockQty(!qtyStr.isEmpty() ? Integer.parseInt(qtyStr) : 0);
         String minStr = AuthServlet.extractJSONValue(body, "minThreshold");

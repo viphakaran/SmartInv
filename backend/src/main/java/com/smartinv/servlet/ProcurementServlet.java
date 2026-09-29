@@ -24,9 +24,11 @@ public class ProcurementServlet implements HttpHandler {
         }
 
         String method = exchange.getRequestMethod();
+        String query = exchange.getRequestURI().getQuery();
 
         if ("GET".equalsIgnoreCase(method)) {
-            List<PurchaseRequest> list = procurementDAO.getAllRequests(null);
+            String filter = getQueryParam(query, "filter");
+            List<PurchaseRequest> list = procurementDAO.getAllRequests(filter);
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < list.size(); i++) {
                 PurchaseRequest r = list.get(i);
@@ -38,6 +40,7 @@ public class ProcurementServlet implements HttpHandler {
             }
             sb.append("]");
             AuthServlet.sendJSON(exchange, 200, sb.toString());
+            return;
         } else if ("POST".equalsIgnoreCase(method)) {
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
             PurchaseRequest req = new PurchaseRequest();
@@ -70,5 +73,16 @@ public class ProcurementServlet implements HttpHandler {
             }
             AuthServlet.sendJSON(exchange, 200, "{\"success\":" + success + "}");
         }
+    }
+
+    private String getQueryParam(String query, String param) {
+        if (query == null) return null;
+        for (String pair : query.split("&")) {
+            String[] parts = pair.split("=");
+            if (parts.length == 2 && parts[0].equalsIgnoreCase(param)) {
+                return java.net.URLDecoder.decode(parts[1], StandardCharsets.UTF_8);
+            }
+        }
+        return null;
     }
 }
