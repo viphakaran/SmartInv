@@ -1,0 +1,91 @@
+-- Smart Inventory and Procurement Management System (SmartInv) Schema
+-- DBMS: MySQL / PostgreSQL / SQLite compatible
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    role VARCHAR(30) NOT NULL CHECK (role IN ('STORE_MANAGER', 'PROCUREMENT_OFFICER', 'SUPPLIER', 'ADMIN')),
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    department VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS inventory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    sku VARCHAR(50) NOT NULL UNIQUE,
+    category_id INT,
+    stock_qty INT NOT NULL DEFAULT 0,
+    min_threshold INT NOT NULL DEFAULT 10,
+    max_capacity INT NOT NULL DEFAULT 1000,
+    unit_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    unit_of_measure VARCHAR(20) DEFAULT 'units',
+    status VARCHAR(20) NOT NULL DEFAULT 'IN_STOCK', -- IN_STOCK, LOW_STOCK, OUT_OF_STOCK
+    image_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS suppliers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    contact_email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    category_id INT,
+    rating DECIMAL(3, 1) DEFAULT 4.5,
+    address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS purchase_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    req_code VARCHAR(30) NOT NULL UNIQUE,
+    item_id INT,
+    item_name VARCHAR(100) NOT NULL,
+    quantity INT NOT NULL,
+    department VARCHAR(50) NOT NULL,
+    priority VARCHAR(20) NOT NULL DEFAULT 'Standard', -- Standard, High, Low
+    notes TEXT,
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING_REVIEW', -- PENDING_REVIEW, APPROVED, DENIED, PROCESSING, DELIVERED
+    requested_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (item_id) REFERENCES inventory(id) ON DELETE SET NULL,
+    FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_no VARCHAR(30) NOT NULL UNIQUE,
+    request_id INT,
+    supplier_id INT,
+    total_amount DECIMAL(12, 2) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING', -- PENDING, APPROVED, SHIPPED, DELIVERED, CANCELLED
+    estimated_delivery DATE,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (request_id) REFERENCES purchase_requests(id) ON DELETE CASCADE,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(30) NOT NULL, -- LOW_STOCK, ORDER_STATUS, APPROVAL_NEEDED, SYSTEM
+    recipient_role VARCHAR(30) NOT NULL,
+    recipient_email VARCHAR(100),
+    message TEXT NOT NULL,
+    channel VARCHAR(20) NOT NULL DEFAULT 'EMAIL', -- EMAIL, SMS, SYSTEM
+    status VARCHAR(20) NOT NULL DEFAULT 'SENT',
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

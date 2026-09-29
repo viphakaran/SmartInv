@@ -1,0 +1,42 @@
+# Node & Frontend dependencies
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.vite/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Java & Backend build outputs
+backend/target/
+backend/bin/
+bin/
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Database & runtime files
+*.db
+*.sqlite
+*.sqlite3
+smartinv.db
+mysql_data/
+
+# Logs & temp files
+*.log
+logs/
+temp/
+tmp/
+sources.txt
+
+# IDE & OS files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+Desktop.ini

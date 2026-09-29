@@ -1,0 +1,26 @@
+# Multi-stage Dockerfile for Java Servlets Backend
+FROM eclipse-temurin:17-jdk-alpine AS build
+WORKDIR /app
+
+RUN apk add --no-cache maven
+
+COPY backend/pom.xml .
+COPY backend/src ./src
+
+# Build project with maven, fallback to direct compilation if needed
+RUN mvn clean package -DskipTests || (mkdir -p bin && javac -d bin $(find src -name "*.java"))
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+
+COPY --from=build /app/target/smartinv-backend-*.jar ./app.jar 2>/dev/null || true
+COPY --from=build /app/bin ./bin 2>/dev/null || true
+
+EXPOSE 8080
+ENV PORT=8080
+ENV DB_URL=jdbc:mysql://mysql:3306/smartinv_db?useSSL=false&allowPublicKeyRetrieval=true
+ENV DB_USER=root
+ENV DB_PASS=root123
+
+# Run Server
+CMD ["sh", "-c", "if [ -f app.jar ]; then java -jar app.jar; else java -cp bin com.smartinv.AppServer; fi"]
